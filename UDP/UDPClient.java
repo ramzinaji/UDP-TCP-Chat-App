@@ -1,3 +1,5 @@
+package UDP;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,7 +22,6 @@ public class UDPClient {
         UDPClient client = new UDPClient();
         client.launch(serverHostname, serverPort);
     }
-    //launch() main logic
     public void launch(String serverHostname, int serverPort) {
         try {
             DatagramSocket socket = new DatagramSocket();
@@ -54,7 +55,6 @@ public class UDPClient {
         return userInput;
     }
 
-    //send DatagramPacket
     private void sendPacket(DatagramSocket socket, InetAddress serverAddress, int serverPort, String message) throws IOException {
         byte[] sendData = message.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = new DatagramPacket(sendData, sendData.length, serverAddress, serverPort);

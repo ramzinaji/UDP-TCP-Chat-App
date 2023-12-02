@@ -1,3 +1,5 @@
+package TCP;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,7 +24,7 @@ public class TCPClient {
         Socket clientSocket = client.connectToServer(serverHostname, serverPort);
 
         if (clientSocket != null) {
-            client.handleConnection(clientSocket);
+            client.startHandlingConnection(clientSocket);
         }
     }
 
@@ -44,28 +46,44 @@ public class TCPClient {
         return null;
     }
 
-    private void handleConnection(Socket clientSocket) {
+    private void startHandlingConnection(Socket clientSocket) {
         try {
             BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true, StandardCharsets.UTF_8);
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8));
-            handleUserInputAndServerResponse(userInput, out, in);
-            clientSocket.close();
+
+            // Start a new thread for receiving and printing messages from the server
+            new Thread(() -> {
+                try {
+                    String serverResponse;
+                    while ((serverResponse = in.readLine()) != null) {
+                        System.out.println("Server Response: " + serverResponse);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error reading from server.");
+                }
+            }).start();
+
+            // Main thread for sending messages to the server
+            handleUserInputAndSendMessage(userInput, out);
+
         } catch (IOException e) {
-            System.out.print("Exception caught when trying to listen on port "
-                    + clientSocket.getPort() + " or listening for a connection");
+            System.out.print("Exception caught when trying to listen on port " + clientSocket.getPort() + " or listening for a connection");
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                System.err.println("Error closing client socket.");
+            }
         }
     }
 
-    private void handleUserInputAndServerResponse(BufferedReader userInput, PrintWriter out, BufferedReader in) throws IOException {
+    private void handleUserInputAndSendMessage(BufferedReader userInput, PrintWriter out) throws IOException {
         System.out.println("Enter text to send to the server. Press <CTRL>+D to exit.");
 
         String inputLine;
-        String response;
         while ((inputLine = userInput.readLine()) != null) {
-            out.println(inputLine); // Send user input to the server
-            response = in.readLine();
-            System.out.println("Server Response: " + response);
+            out.println(inputLine);
         }
     }
 }
